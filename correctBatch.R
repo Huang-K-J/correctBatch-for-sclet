@@ -4,7 +4,7 @@ combine_VariableFeatures<- function (all.batch, include_fields = NULL,equiweight
   for (i in seq_along(all.batch)) {
     sub.dec[[i]] <- rowData(all.batch[[i]])
   }
-  collected <- scuttle:::.unpackLists(sub.dec)
+  collected <- scuttle::.unpackLists(sub.dec)
   if (is.null(ncells)) {
     ncells <- rep(10L, length(collected))
   }
@@ -21,8 +21,7 @@ exclude_some_fields <- function (collected,exclude)
   all.numerics <- list()
   for (i in seq_along(collected)) {
     x <- collected[[i]]
-    all.numerics[[i]] <- colnames(x)[vapply(x, is.numeric, 
-                                            TRUE)]
+    all.numerics[[i]] <- colnames(x)[vapply(x, is.numeric,TRUE)]
   }
   setdiff(Reduce(intersect, all.numerics), exclude)
 }
@@ -62,8 +61,8 @@ combine_blocked <- function (blocks, geometric = FALSE, equiweight=TRUE, ncells=
     combined[[i]] <- averaged
   }
   output <- DataFrame(combined, row.names = rn[[1]])
-  output$per.block <- do.call(DataFrame, c(lapply(original, 
-                                                  I), list(check.names = FALSE)))
+  output$per.block <- do.call(DataFrame, c(lapply(original, I),
+                                           list(check.names = FALSE)))
   output
 } 
 
@@ -72,40 +71,31 @@ BatchRemover <- function (..., batch = NULL, restrict = NULL, correct.all = TRUE
           assay.type = "counts", PARAM = FastMnnParam(), multi.norm.args = list(), 
            model.var.args = list(),hvg.args=5000) 
 { 
-  all.batches <- scuttle:::.unpackLists(...)
+  all.batches <- scuttle::.unpackLists(...)
   all.genes <- lapply(all.batches, rownames)
-  universe <- Reduce(intersect, all.genes)
-  if (length(universe) == 0) {
-    stop("no genes remaining in the intersection")
+  common_genes <- Reduce(intersect, all.genes)
+  if (length(common_genes) == 0) {
+    stop("there are no common genes")
   }
-  non.same <- FALSE
   for (i in seq_along(all.batches)) {
-    if (!identical(universe, rownames(all.batches[[i]]))) {
-      non.same <- TRUE
-      all.batches[[i]] <- all.batches[[i]][universe, , 
-                                           drop = FALSE]
+    if (!identical(common_genes, rownames(all.batches[[i]]))) {
+      all.batches[[i]] <- all.batches[[i]][common_genes, ,drop = FALSE]
     }
-  }
-  
+  } 
     all.batches <- do.call(multiBatchNorm, c(all.batches, list(batch = batch, 
                  assay.type = assay.type, preserve.single = TRUE), multi.norm.args))
-   
-    dec <- combine_VariableFeatures(all.batches,include_fields = NULL,equiweight = TRUE, ncells = NULL) 
+    
+    dec <- combine_VariableFeatures(all.batches,include_fields = NULL,
+                                            equiweight = TRUE, ncells = NULL) 
     i <- order(dec$variance.standardized, decreasing = TRUE)
     dec <- dec[i, ]
     hvgs <- rownames(dec)[1:hvg.args]
+    
     corrected <- batchelor:::batchCorrect(all.batches, batch = batch, restrict = restrict, 
                               correct.all = correct.all, subset.row = hvgs, PARAM = PARAM)
+    
     list( hvgs = hvgs, corrected = corrected)
   } 
-
-
-
-
-
-
-
-
 
 
 
